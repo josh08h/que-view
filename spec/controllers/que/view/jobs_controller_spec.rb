@@ -96,4 +96,67 @@ describe Que::View::JobsController do
       end
     end
   end
+
+  describe 'POST#reschedule_filtered' do
+    context 'with no job IDs' do
+      it 'does not reschedule any job' do
+        post :reschedule_filtered, params: { status: 'scheduled', job_ids: [] }
+        expect(response).to redirect_to jobs_path(status: 'scheduled')
+      end
+    end
+
+    context 'with existing job IDs' do
+      let!(:job1) { create :que_job }
+      let!(:job2) { create :que_job }
+      let!(:job3) { create :que_job }
+
+      it 'reschedules only specified jobs', :aggregate_failures do
+        original_times = {
+          job1: job1.run_at,
+          job2: job2.run_at,
+          job3: job3.run_at
+        }
+
+        post :reschedule_filtered, params: {
+          status: 'scheduled',
+          job_ids: [job1.id, job2.id]
+        }
+
+        expect(job1.reload.run_at).not_to eq(original_times[:job1])
+        expect(job2.reload.run_at).not_to eq(original_times[:job2])
+        expect(job3.reload.run_at).to eq(original_times[:job3])
+        expect(response).to redirect_to(jobs_path(status: 'scheduled'))
+      end
+    end
+  end
+
+  describe 'DELETE#destroy_filtered' do
+    context 'with no job IDs' do
+      it 'does not destroy any job', :aggregate_failures do
+        expect {
+          delete :destroy_filtered, params: { status: 'scheduled', job_ids: [] }
+        }.not_to change(QueJob, :count)
+
+        expect(response).to redirect_to(jobs_path(status: 'scheduled'))
+      end
+    end
+
+    context 'with existing job IDs' do
+      let!(:job1) { create :que_job }
+      let!(:job2) { create :que_job }
+      let!(:job3) { create :que_job }
+
+      it 'destroys only specified jobs', :aggregate_failures do
+        delete :destroy_filtered, params: {
+          status: 'scheduled',
+          job_ids: [job1.id, job2.id]
+        }
+
+        expect(QueJob.exists?(job1.id)).to be false
+        expect(QueJob.exists?(job2.id)).to be false
+        expect(QueJob.exists?(job3.id)).to be true
+        expect(response).to redirect_to(jobs_path(status: 'scheduled'))
+      end
+    end
+  end
 end

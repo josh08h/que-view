@@ -48,6 +48,24 @@ module Que
         )
       end
 
+      def reschedule_filtered
+        job_ids = params[:job_ids] || []
+        updated_rows = ::Que::View.reschedule_jobs_by_ids(job_ids, Time.now)
+        redirect_to(
+          jobs_path(status: params[:status]),
+          notice: updated_rows.empty? ? 'No jobs rescheduled' : "#{updated_rows.count} jobs rescheduled"
+        )
+      end
+
+      def destroy_filtered
+        job_ids = params[:job_ids] || []
+        updated_rows = ::Que::View.delete_jobs_by_ids(job_ids)
+        redirect_to(
+          jobs_path(status: params[:status]),
+          notice: updated_rows.empty? ? 'No jobs deleted' : "#{updated_rows.count} jobs deleted"
+        )
+      end
+
       private
 
       def find_queue_names

@@ -38,7 +38,7 @@ module Que
                    :fetch_queue_names, :fetch_job_names,
                    :fetch_running_jobs, :fetch_failing_jobs, :fetch_scheduled_jobs, :fetch_finished_jobs,
                    :fetch_expired_jobs, :fetch_job,
-                   :delete_failing_jobs, :delete_scheduled_jobs, :delete_job,
-                   :reschedule_scheduled_jobs, :reschedule_failing_jobs, :reschedule_job
+                   :delete_failing_jobs, :delete_scheduled_jobs, :delete_job, :delete_jobs_by_ids,
+                   :reschedule_scheduled_jobs, :reschedule_failing_jobs, :reschedule_job, :reschedule_jobs_by_ids
   end
 end

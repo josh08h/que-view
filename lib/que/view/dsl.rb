@@ -83,6 +83,18 @@ module Que
         execute(reschedule_jobs_sql(lock_job_sql(job_id), time))
       end
 
+      def reschedule_jobs_by_ids(job_ids, time)
+        return [] if job_ids.blank?
+
+        execute(reschedule_jobs_sql(lock_jobs_by_ids_sql(job_ids), time))
+      end
+
+      def delete_jobs_by_ids(job_ids)
+        return [] if job_ids.blank?
+
+        execute(delete_jobs_sql(lock_jobs_by_ids_sql(job_ids)))
+      end
+
       private
 
       def basis_queue_stats
@@ -298,6 +310,15 @@ module Que
           SELECT id, pg_try_advisory_lock(id) AS locked
           FROM que_jobs
           WHERE id = #{job_id}::bigint
+        SQL
+      end
+
+      def lock_jobs_by_ids_sql(job_ids)
+        safe_job_ids = job_ids.map(&:to_i).join(',')
+        <<-SQL.squish
+          SELECT id, pg_try_advisory_lock(id) AS locked
+          FROM que_jobs
+          WHERE id IN (#{safe_job_ids})
         SQL
       end
       # rubocop: enable Metrics/MethodLength

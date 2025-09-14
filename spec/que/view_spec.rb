@@ -50,4 +50,54 @@ describe Que::View do
       )
     end
   end
+
+  describe '#reschedule_jobs_by_ids' do
+    let!(:job1) { create :que_job }
+    let!(:job2) { create :que_job }
+    let!(:job3) { create :que_job }
+
+    it 'reschedules only specified jobs', :aggregate_failures do
+      original_job3_run_at = job3.run_at
+      time = Time.current
+      described_class.reschedule_jobs_by_ids([job1.id, job2.id], time)
+
+      expect(job1.reload.run_at).to be_within(1.second).of(time)
+      expect(job2.reload.run_at).to be_within(1.second).of(time)
+      expect(job3.reload.run_at).to eq(original_job3_run_at)
+    end
+
+    it 'returns empty array when no job IDs provided' do
+      result = described_class.reschedule_jobs_by_ids([], Time.current)
+      expect(result).to eq []
+    end
+
+    it 'returns empty array when nil job IDs provided' do
+      result = described_class.reschedule_jobs_by_ids(nil, Time.current)
+      expect(result).to eq []
+    end
+  end
+
+  describe '#delete_jobs_by_ids' do
+    let!(:job1) { create :que_job }
+    let!(:job2) { create :que_job }
+    let!(:job3) { create :que_job }
+
+    it 'deletes only specified jobs', :aggregate_failures do
+      described_class.delete_jobs_by_ids([job1.id, job2.id])
+
+      expect(QueJob.exists?(job1.id)).to be false
+      expect(QueJob.exists?(job2.id)).to be false
+      expect(QueJob.exists?(job3.id)).to be true
+    end
+
+    it 'returns empty array when no job IDs provided' do
+      result = described_class.delete_jobs_by_ids([])
+      expect(result).to eq []
+    end
+
+    it 'returns empty array when nil job IDs provided' do
+      result = described_class.delete_jobs_by_ids(nil)
+      expect(result).to eq []
+    end
+  end
 end
